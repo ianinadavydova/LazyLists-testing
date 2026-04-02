@@ -15,6 +15,8 @@ private enum class DemoScreen {
     InitialScroll,
     BasicScrollToLastItem,
     BasicScrollToMiddleItem,
+    BackwardScrollToFirstItem,
+    AnimatedScrollToLastItem
 }
 
 @Composable
@@ -45,6 +47,16 @@ fun App() {
                     onClick = { selectedDemo = DemoScreen.BasicScrollToMiddleItem },
                     text = { Text("Scroll to middle item") },
                 )
+                Tab(
+                    selected = selectedDemo == DemoScreen.BackwardScrollToFirstItem,
+                    onClick = { selectedDemo = DemoScreen.BackwardScrollToFirstItem },
+                    text = { Text("Backward scroll to first item") },
+                )
+                Tab(
+                    selected = selectedDemo == DemoScreen.AnimatedScrollToLastItem,
+                    onClick = { selectedDemo = DemoScreen.AnimatedScrollToLastItem },
+                    text = { Text("Animated scroll to last item") },
+                )
             }
 
             when (selectedDemo) {
@@ -56,11 +68,19 @@ fun App() {
                 }
 
                 DemoScreen.BasicScrollToLastItem -> {
-                    BasicScrollToItemDemo(TotalRowsCount)
+                    BasicScrollToItemDemo(TotalRowsCount, false, false)
                 }
 
                 DemoScreen.BasicScrollToMiddleItem -> {
-                    BasicScrollToItemDemo(TotalRowsCount / 2)
+                    BasicScrollToItemDemo(TotalRowsCount / 2, false, false)
+                }
+
+                DemoScreen.BackwardScrollToFirstItem -> {
+                    BasicScrollToItemDemo(TotalRowsCount, false, true)
+                }
+
+                DemoScreen.AnimatedScrollToLastItem -> {
+                    BasicScrollToItemDemo(TotalRowsCount, true, false)
                 }
             }
         }

@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 
 
 @Composable
-fun BasicScrollToItemDemo(indexToScroll: Int) {
+fun BasicScrollToItemDemo(indexToScroll: Int, isAnimatedScroll: Boolean, scrollToTopButtonNeeded: Boolean) {
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
@@ -58,22 +58,7 @@ fun BasicScrollToItemDemo(indexToScroll: Int) {
         }
     }
 
-    var settledSeenRowsCount by remember { mutableStateOf(0) }
-
-    LaunchedEffect(listState) {
-        val seenLazyIndexes = hashSetOf<Int>()
-
-        snapshotFlow {
-            listState.isScrollInProgress to listState.layoutInfo.visibleItemsInfo.map { it.index}
-        }.collect { (isScrolling, visibleIndexes) ->
-            if (!isScrolling) {
-                visibleIndexes.forEach { index ->
-                        seenLazyIndexes.add(index)
-                }
-                settledSeenRowsCount = seenLazyIndexes.size
-            }
-        }
-    }
+    val createItemCallsCount = remember({ CallCounter() })
 
     Column {
         Text(
@@ -97,12 +82,39 @@ fun BasicScrollToItemDemo(indexToScroll: Int) {
                 )
 
         Text(
-                text = "Rows seen after completed scrolls: $settledSeenRowsCount",
+                text = "Create row calls count: ${createItemCallsCount.value}",
                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
                 )
+        if (scrollToTopButtonNeeded) {
+            Button(
+                onClick = {
+                    if (isAnimatedScroll) {
+                        scope.launch {
+                            listState.animateScrollToItem(0)
+                        }
+                    } else {
+                        scope.launch {
+                            listState.scrollToItem(0)
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .padding(horizontal = 12.dp)
+            ) {
+                Text("To row index 0")
+            }
+        }
         Button(
             onClick = {
-                    scope.launch {  listState.scrollToItem(indexToScroll) }
+                if (isAnimatedScroll) {
+                    scope.launch {
+                        listState.animateScrollToItem(indexToScroll)
+                    }
+                } else {
+                    scope.launch {
+                        listState.scrollToItem(indexToScroll)
+                    }
+                }
             },
             modifier = Modifier
                 .padding(horizontal = 12.dp)
@@ -110,12 +122,12 @@ fun BasicScrollToItemDemo(indexToScroll: Int) {
             Text("To row index $indexToScroll")
         }
 
-        createScrollToItemList(listState)
+        createScrollToItemList(listState, createItemCallsCount)
     }
 }
 
 @Composable
-fun createScrollToItemList(listState: LazyListState, tag: String? = null) {
+fun createScrollToItemList(listState: LazyListState, callCounter: CallCounter, tag: String? = null) {
     var modifier = Modifier
         .height((10 * ItemHeight).dp)
         .fillMaxWidth()
@@ -129,6 +141,7 @@ fun createScrollToItemList(listState: LazyListState, tag: String? = null) {
         state = listState,
     ) {
         items(TotalRowsCount) { index ->
+            ++callCounter.value
             Text(
                 modifier = Modifier
                     .fillMaxWidth()

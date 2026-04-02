@@ -42,22 +42,7 @@ fun BasicRenderingDemo() {
         }
     }
 
-    var settledSeenRowsCount by remember { mutableStateOf(0) }
-
-    LaunchedEffect(listState) {
-        val seenLazyIndexes = hashSetOf<Int>()
-
-        snapshotFlow {
-            listState.isScrollInProgress to listState.layoutInfo.visibleItemsInfo.map { it.index }
-        }.collect { (isScrolling, visibleIndexes) ->
-            if (!isScrolling) {
-                visibleIndexes.forEach { index ->
-                    seenLazyIndexes.add(index)
-                }
-                settledSeenRowsCount = seenLazyIndexes.size
-            }
-        }
-    }
+    val createItemCallsCount = remember({ CallCounter() })
 
     Text(
         text = "Visible row count: ${visibleRowIndices.size}",
@@ -70,17 +55,17 @@ fun BasicRenderingDemo() {
     )
 
     Text(
-        text = "Rows seen after completed scrolls: $settledSeenRowsCount",
+        text = "Create row calls count: ${createItemCallsCount.value}",
         modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
     )
 
-    createBasicRenderingList(listState)
+    createBasicRenderingList(listState, createItemCallsCount)
 }
 
 const val BasicRenderingTotalRowsCount = 20
 
 @Composable
-fun createBasicRenderingList(listState: LazyListState, tag: String? = null) {
+fun createBasicRenderingList(listState: LazyListState, callCounter: CallCounter, tag: String? = null) {
     var modifier = Modifier
         .fillMaxWidth()
         .height((BasicRenderingTotalRowsCount / 2 * ItemHeight).dp)
@@ -96,6 +81,7 @@ fun createBasicRenderingList(listState: LazyListState, tag: String? = null) {
         state = listState
     ) {
         items(BasicRenderingTotalRowsCount) { index ->
+            ++callCounter.value
             Text(
                 modifier = Modifier
                     .fillMaxWidth()

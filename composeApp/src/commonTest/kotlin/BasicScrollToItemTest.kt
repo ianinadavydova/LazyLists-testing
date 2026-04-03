@@ -10,6 +10,7 @@ import org.example.project.TotalRowsCount
 import org.example.project.createScrollToItemList
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -67,11 +68,16 @@ class BasicScrollToItemTest {
 
             assertEquals(0, listState.firstVisibleItemIndex)
             assertEquals(10, callCounter.value)
+            assertTrue {listState.canScrollForward}
+            assertFalse {listState.canScrollBackward}
 
-            listState.scrollToItem(TotalRowsCount)
+
+            listState.scrollToItem(TotalRowsCount - 1)
 
             assertEquals(TotalRowsCount - 10, listState.firstVisibleItemIndex)
             assertEquals(20, callCounter.value)
+            assertFalse {listState.canScrollForward}
+            assertTrue {listState.canScrollBackward}
 
             listState.scrollToItem(0)
             assertEquals(0, listState.firstVisibleItemIndex)
@@ -93,7 +99,7 @@ class BasicScrollToItemTest {
         onNodeWithTag(tagOfList).assertExists()
         assertNotNull(listState)
 
-        listState.animateScrollToItem(TotalRowsCount)
+        listState.animateScrollToItem(TotalRowsCount - 1)
         waitUntil { listState.firstVisibleItemIndex == TotalRowsCount - 10}
         assertEquals(TotalRowsCount - 10, listState.firstVisibleItemIndex)
         assertTrue(callCounter.value in 195..200)

@@ -1,0 +1,173 @@
+name: JVM Test Matrix
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  openjdk:
+    name: OpenJDK • ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Main lane: closest to the local setup described in the notes.
+          - name: macos26-arm64-jdk23
+            os: macos-26
+            distribution: temurin
+            java: "23"
+
+          # Latest OpenJDK smoke lane.
+          - name: macos26-arm64-jdk25
+            os: macos-26
+            distribution: temurin
+            java: "25"
+
+          # Minimal supported JDK lane.
+          # If you later decide your project supports JDK 11, change this to 11.
+          - name: macos26-arm64-jdk17
+            os: macos-26
+            distribution: temurin
+            java: "17"
+
+          # Hosted Intel smoke lane.
+          # GitHub-hosted macOS 12 is not available, so macos-15-intel is the closest hosted proxy.
+          - name: macos15-intel-jdk23
+            os: macos-15-intel
+            distribution: temurin
+            java: "23"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up ${{ matrix.distribution }} JDK ${{ matrix.java }}
+        uses: actions/setup-java@v5
+        with:
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
+          cache: gradle
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Print Java version
+        run: java -version
+
+      - name: Run JVM tests
+        run: ./gradlew :composeApp:jvmTest --stacktrace
+
+  jbr:
+    name: JBR • macos26-arm64-jbr25
+    runs-on: macos-26
+    timeout-minutes: 25
+    env:
+      JBR_MAJOR: "25"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: Resolve latest JBR download URL
+        id: resolve-jbr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          import urllib.request
+
+          major = os.environ["JBR_MAJOR"]
+          token = os.environ["GH_TOKEN"]
+          req = urllib.request.Request(
+              "https://api.github.com/repos/JetBrains/JetBrainsRuntime/releases?per_page=100",
+              headers={
+                  "Accept": "application/vnd.github+json",
+                  "Authorization": f"Bearer {token}",
+                  "X-GitHub-Api-Version": "2022-11-28",
+              },
+          )
+
+          with urllib.request.urlopen(req) as response:
+              releases = json.load(response)
+
+          patterns = [
+              f"jbrsdk-{major}.",
+              f"jbr-{major}.",
+              f"jbrsdk_jcef-{major}.",
+              f"jbr_jcef-{major}.",
+          ]
+
+          chosen = None
+          for release in releases:
+              for prefix in patterns:
+                  for asset in release.get("assets", []):
+                      name = asset["name"]
+                      if (
+                          name.startswith(prefix)
+                          and "-osx-aarch64-" in name
+                          and name.endswith(".tar.gz")
+                      ):
+                          chosen = {
+                              "release": release["tag_name"],
+                              "name": name,
+                              "url": asset["browser_download_url"],
+                          }
+                          break
+                  if chosen:
+                      break
+              if chosen:
+                  break
+
+          if not chosen:
+              sys.exit(f"Could not find a macOS arm64 JBR asset for JBR major {major}.")
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              fh.write(f"release={chosen['release']}\n")
+              fh.write(f"name={chosen['name']}\n")
+              fh.write(f"url={chosen['url']}\n")
+          PY
+
+      - name: Download and install JBR
+        run: |
+          archive="$RUNNER_TEMP/${{ steps.resolve-jbr.outputs.name }}"
+          install_dir="$RUNNER_TEMP/jbr"
+
+          rm -rf "$install_dir"
+          mkdir -p "$install_dir"
+
+          curl -fsSL "${{ steps.resolve-jbr.outputs.url }}" -o "$archive"
+          tar -xzf "$archive" -C "$install_dir"
+
+          java_home="$(find "$install_dir" -type d -path '*/Contents/Home' | head -n 1)"
+          if [ -z "$java_home" ]; then
+            echo "Failed to locate JAVA_HOME inside extracted JBR archive"
+            exit 1
+          fi
+
+          echo "JAVA_HOME=$java_home" >> "$GITHUB_ENV"
+          echo "$java_home/bin" >> "$GITHUB_PATH"
+
+      - name: Print JBR version
+        run: |
+          echo "Resolved release: ${{ steps.resolve-jbr.outputs.release }}"
+          echo "Resolved asset:   ${{ steps.resolve-jbr.outputs.name }}"
+          java -version
+
+      - name: Run JVM tests
+        run: ./gradlew :composeApp:jvmTest --stacktrace

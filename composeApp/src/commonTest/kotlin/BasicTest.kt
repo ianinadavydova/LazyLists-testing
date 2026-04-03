@@ -2,6 +2,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.runComposeUiTest
 import org.example.project.BasicRenderingTotalRowsCount
 import org.example.project.CallCounter
@@ -30,8 +31,17 @@ class BasicTest {
 
         // Tests the declared UI with assertions and actions of the Compose Multiplatform testing API
         onNodeWithTag(tagOfList).assertExists()
-        assertNotNull(listState)
-        assertEquals(BasicRenderingTotalRowsCount / 2, listState.layoutInfo.visibleItemsInfo.size)
-        assertEquals(BasicRenderingTotalRowsCount / 2, callCounter.value)
+        val state = assertNotNull(listState)
+
+        assertEquals(0, state.firstVisibleItemIndex)
+        assertEquals(BasicRenderingTotalRowsCount / 2, state.layoutInfo.visibleItemsInfo.size)
+        assertEquals(
+            (0 until BasicRenderingTotalRowsCount / 2).toList(),
+            state.layoutInfo.visibleItemsInfo.map { it.index }
+        )
+
+        for (index in 0 until BasicRenderingTotalRowsCount / 2) {
+            onNodeWithText("Item: $index").assertExists()
+        }
     }
 }

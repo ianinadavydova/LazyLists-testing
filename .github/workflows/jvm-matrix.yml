@@ -27,12 +27,6 @@ jobs:
             distribution: temurin
             java: "23"
 
-          # Latest OpenJDK smoke lane.
-          - name: macos26-arm64-jdk25
-            os: macos-26
-            distribution: temurin
-            java: "25"
-
           # Minimal supported JDK lane.
           # If you later decide your project supports JDK 11, change this to 11.
           - name: macos26-arm64-jdk17

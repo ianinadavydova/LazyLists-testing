@@ -89,6 +89,7 @@ jobs:
           python3 - <<'PY'
           import json
           import os
+          import re
           import sys
           import urllib.request
 
@@ -106,36 +107,33 @@ jobs:
           with urllib.request.urlopen(req) as response:
               releases = json.load(response)
 
-          patterns = [
-              f"jbrsdk-{major}.",
-              f"jbr-{major}.",
-              f"jbrsdk_jcef-{major}.",
-              f"jbr_jcef-{major}.",
-          ]
-
           chosen = None
+          release_prefix = f"jbr-release-{major}"
+          url_re = re.compile(
+              rf"https://cache-redirector\.jetbrains\.com/intellij-jbr/"
+              rf"(?:jbr_jcef|jbrsdk_jcef|jbr|jbrsdk)-{major}(?:\.\d+(?:\.\d+)?)?"
+              rf"-osx-aarch64-[^)\s\"']+\.tar\.gz"
+          )
+
           for release in releases:
-              for prefix in patterns:
-                  for asset in release.get("assets", []):
-                      name = asset["name"]
-                      if (
-                          name.startswith(prefix)
-                          and "-osx-aarch64-" in name
-                          and name.endswith(".tar.gz")
-                      ):
-                          chosen = {
-                              "release": release["tag_name"],
-                              "name": name,
-                              "url": asset["browser_download_url"],
-                          }
-                          break
-                  if chosen:
-                      break
+              if not release.get("tag_name", "").startswith(release_prefix):
+                  continue
+              body = release.get("body") or ""
+              match = url_re.search(body)
+              if match:
+                  url = match.group(0)
+                  chosen = {
+                      "release": release["tag_name"],
+                      "name": url.rsplit("/", 1)[-1],
+                      "url": url,
+                  }
               if chosen:
                   break
 
           if not chosen:
-              sys.exit(f"Could not find a macOS arm64 JBR asset for JBR major {major}.")
+              sys.exit(
+                  f"Could not find a macOS arm64 JBR download URL in release notes for JBR major {major}."
+              )
 
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
               fh.write(f"release={chosen['release']}\n")

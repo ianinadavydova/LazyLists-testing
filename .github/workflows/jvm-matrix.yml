@@ -67,6 +67,79 @@ jobs:
       - name: Run JVM tests
         run: ./gradlew :composeApp:jvmTest --stacktrace
 
+      - name: Summarize JVM test results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob
+          import os
+          import xml.etree.ElementTree as ET
+
+          files = sorted(glob.glob("composeApp/build/test-results/jvmTest/TEST-*.xml"))
+          summary_path = os.environ["GITHUB_STEP_SUMMARY"]
+
+          total = 0
+          failures = 0
+          errors = 0
+          skipped = 0
+          duration = 0.0
+          failed_cases = []
+
+          for path in files:
+              root = ET.parse(path).getroot()
+              total += int(root.attrib.get("tests", 0))
+              failures += int(root.attrib.get("failures", 0))
+              errors += int(root.attrib.get("errors", 0))
+              skipped += int(root.attrib.get("skipped", 0))
+              duration += float(root.attrib.get("time", 0.0))
+
+              suite = root.attrib.get("name", os.path.basename(path))
+              for case in root.findall("testcase"):
+                  failure = case.find("failure")
+                  error = case.find("error")
+                  if failure is not None or error is not None:
+                      issue = failure if failure is not None else error
+                      failed_cases.append(
+                          (
+                              suite,
+                              case.attrib.get("name", "<unknown>"),
+                              issue.attrib.get("message", "").strip(),
+                          )
+                      )
+
+          with open(summary_path, "a", encoding="utf-8") as fh:
+              fh.write("## JVM test report\n\n")
+              fh.write("| Total | Failures | Errors | Skipped | Time (s) |\n")
+              fh.write("| ---: | ---: | ---: | ---: | ---: |\n")
+              fh.write(f"| {total} | {failures} | {errors} | {skipped} | {duration:.3f} |\n\n")
+
+              if failed_cases:
+                  fh.write("### Failed tests\n\n")
+                  for suite, case, message in failed_cases[:20]:
+                      short = message.splitlines()[0] if message else ""
+                      fh.write(f"- `{suite}` / `{case}`: {short}\n")
+                  if len(failed_cases) > 20:
+                      fh.write(f"- ... and {len(failed_cases) - 20} more\n")
+                  fh.write("\n")
+              else:
+                  fh.write("All JVM tests passed.\n\n")
+
+              fh.write("Artifacts include:\n")
+              fh.write("- JUnit XML: `composeApp/build/test-results/jvmTest`\n")
+              fh.write("- HTML report: `composeApp/build/reports/tests/jvmTest`\n")
+          PY
+
+      - name: Upload JVM test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-test-report-${{ matrix.name }}
+          path: |
+            composeApp/build/test-results/jvmTest
+            composeApp/build/reports/tests/jvmTest
+          if-no-files-found: warn
+          retention-days: 14
+
   jbr:
     name: JBR • macos26-arm64-jbr25
     runs-on: macos-26
@@ -169,3 +242,76 @@ jobs:
 
       - name: Run JVM tests
         run: ./gradlew :composeApp:jvmTest --stacktrace
+
+      - name: Summarize JVM test results
+        if: always()
+        run: |
+          python3 - <<'PY'
+          import glob
+          import os
+          import xml.etree.ElementTree as ET
+
+          files = sorted(glob.glob("composeApp/build/test-results/jvmTest/TEST-*.xml"))
+          summary_path = os.environ["GITHUB_STEP_SUMMARY"]
+
+          total = 0
+          failures = 0
+          errors = 0
+          skipped = 0
+          duration = 0.0
+          failed_cases = []
+
+          for path in files:
+              root = ET.parse(path).getroot()
+              total += int(root.attrib.get("tests", 0))
+              failures += int(root.attrib.get("failures", 0))
+              errors += int(root.attrib.get("errors", 0))
+              skipped += int(root.attrib.get("skipped", 0))
+              duration += float(root.attrib.get("time", 0.0))
+
+              suite = root.attrib.get("name", os.path.basename(path))
+              for case in root.findall("testcase"):
+                  failure = case.find("failure")
+                  error = case.find("error")
+                  if failure is not None or error is not None:
+                      issue = failure if failure is not None else error
+                      failed_cases.append(
+                          (
+                              suite,
+                              case.attrib.get("name", "<unknown>"),
+                              issue.attrib.get("message", "").strip(),
+                          )
+                      )
+
+          with open(summary_path, "a", encoding="utf-8") as fh:
+              fh.write("## JVM test report\n\n")
+              fh.write("| Total | Failures | Errors | Skipped | Time (s) |\n")
+              fh.write("| ---: | ---: | ---: | ---: | ---: |\n")
+              fh.write(f"| {total} | {failures} | {errors} | {skipped} | {duration:.3f} |\n\n")
+
+              if failed_cases:
+                  fh.write("### Failed tests\n\n")
+                  for suite, case, message in failed_cases[:20]:
+                      short = message.splitlines()[0] if message else ""
+                      fh.write(f"- `{suite}` / `{case}`: {short}\n")
+                  if len(failed_cases) > 20:
+                      fh.write(f"- ... and {len(failed_cases) - 20} more\n")
+                  fh.write("\n")
+              else:
+                  fh.write("All JVM tests passed.\n\n")
+
+              fh.write("Artifacts include:\n")
+              fh.write("- JUnit XML: `composeApp/build/test-results/jvmTest`\n")
+              fh.write("- HTML report: `composeApp/build/reports/tests/jvmTest`\n")
+          PY
+
+      - name: Upload JVM test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-test-report-jbr25
+          path: |
+            composeApp/build/test-results/jvmTest
+            composeApp/build/reports/tests/jvmTest
+          if-no-files-found: warn
+          retention-days: 14

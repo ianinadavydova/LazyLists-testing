@@ -79,7 +79,7 @@ fun createBasicRenderingList(listState: LazyListState, callCounter: CallCounter,
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .focusable(enabled = true)
+                    .focusable()
                     .height(ItemHeight.dp)
                     .background(if (index % 2 == 0) Color.LightGray else Color.Gray),
                    // .border(width = 0.dp, color = Color.Gray),

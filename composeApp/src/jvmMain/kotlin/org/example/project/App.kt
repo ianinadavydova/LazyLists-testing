@@ -17,7 +17,8 @@ private enum class DemoScreen {
     BasicScrollToMiddleItem,
     BackwardScrollToFirstItem,
     AnimatedScrollToLastItem,
-    ContentPaddingDemo
+    ContentPaddingDemo,
+    DataUpdatesDemo
 }
 
 @Composable
@@ -63,6 +64,11 @@ fun App() {
                     onClick = { selectedDemo = DemoScreen.ContentPaddingDemo },
                     text = { Text("Content padding demo") },
                 )
+                Tab(
+                    selected = selectedDemo == DemoScreen.DataUpdatesDemo,
+                    onClick = { selectedDemo = DemoScreen.DataUpdatesDemo },
+                    text = { Text("Data updates demo") },
+                )
             }
 
             when (selectedDemo) {
@@ -91,6 +97,9 @@ fun App() {
 
                 DemoScreen.ContentPaddingDemo -> {
                     ContentPaddingDemo()
+                }
+                DemoScreen.DataUpdatesDemo -> {
+                    DataUpdatesDemo()
                 }
             }
         }

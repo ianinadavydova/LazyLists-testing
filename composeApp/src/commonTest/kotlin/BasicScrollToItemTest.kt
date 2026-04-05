@@ -1,21 +1,13 @@
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.test.ComposeUiTest
-import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.example.project.CallCounter
 import org.example.project.TotalRowsCount
 import org.example.project.createScrollToItemList
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertFalse
-import kotlin.test.assertNotNull
-import kotlin.test.assertTrue
+import kotlin.test.*
 
 class BasicScrollToItemTest {
 
@@ -47,10 +39,13 @@ class BasicScrollToItemTest {
         val state = assertNotNull(listState)
 
         assertVisibleWindow(0, state)
+        assertEquals(10, callCounter.value)
 
         state.scrollToItem(indexToScroll)
 
         assertVisibleWindow(expectedFirstVisibleItem, state)
+        assertEquals(20, callCounter.value)
+
     }
 
     @Test
@@ -71,18 +66,26 @@ class BasicScrollToItemTest {
         assertVisibleWindow(0, state)
         assertTrue(state.canScrollForward)
         assertFalse(state.canScrollBackward)
+        assertEquals(10, callCounter.value,
+            "Expected 10 item creation counts, but was $callCounter.value")
 
         state.scrollToItem(TotalRowsCount - 1)
 
         assertVisibleWindow(TotalRowsCount - visibleRowCount, state)
         assertFalse(state.canScrollForward)
         assertTrue(state.canScrollBackward)
+        assertEquals(20, callCounter.value,
+            "Expected 20 item creation counts, but was $callCounter.value")
+
 
         state.scrollToItem(0)
 
         assertVisibleWindow(0, state)
         assertTrue(state.canScrollForward)
         assertFalse(state.canScrollBackward)
+        assertEquals(30, callCounter.value,
+        "Expected 30 item creation counts, but was $callCounter.value")
+
     }
 
     @Test
@@ -124,7 +127,7 @@ class BasicScrollToItemTest {
         assertFalse(state.isScrollInProgress)
         assertTrue(
             callCounter.value in 185..205,
-            "Create rows call count out of range: ${callCounter.value}"
+            "Expected from 185 to 205 item creation counts, but was: ${callCounter.value}"
         )
         //assertTrue(callCounter.value in 180..181)
     }

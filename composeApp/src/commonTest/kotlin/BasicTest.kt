@@ -1,6 +1,7 @@
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.runComposeUiTest
@@ -35,6 +36,7 @@ class BasicTest {
 
         assertEquals(0, state.firstVisibleItemIndex)
         assertEquals(BasicRenderingTotalRowsCount / 2, state.layoutInfo.visibleItemsInfo.size)
+        assertEquals(callCounter.value, BasicRenderingTotalRowsCount / 2)
         assertEquals(
             (0 until BasicRenderingTotalRowsCount / 2).toList(),
             state.layoutInfo.visibleItemsInfo.map { it.index }
@@ -42,6 +44,10 @@ class BasicTest {
 
         for (index in 0 until BasicRenderingTotalRowsCount / 2) {
             onNodeWithText("Item: $index").assertExists()
+            onNodeWithText("Item: $index").assertIsDisplayed()
+        }
+        for (index in BasicRenderingTotalRowsCount / 2 until BasicRenderingTotalRowsCount) {
+            onNodeWithText("Item: $index").assertDoesNotExist()
         }
     }
 }

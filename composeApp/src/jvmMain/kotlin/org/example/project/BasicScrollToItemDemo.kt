@@ -132,8 +132,6 @@ fun createScrollToItemList(listState: LazyListState, callCounter: CallCounter, t
     var modifier = Modifier
         .height((10 * ItemHeight).dp)
         .fillMaxWidth()
-        .focusable(enabled = true)
-        .border(width = 1.dp, color = Color.Red)
         .background(Color(0x1AFF0000))
     if (tag != null) {
         modifier = modifier.testTag(tag)

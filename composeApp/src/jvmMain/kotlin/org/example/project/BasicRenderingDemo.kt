@@ -2,6 +2,7 @@ package org.example.project
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -62,16 +63,14 @@ fun BasicRenderingDemo() {
     createBasicRenderingList(listState, createItemCallsCount)
 }
 
-const val BasicRenderingTotalRowsCount = 20
+const val BasicRenderingTotalRowsCount = 200
 
 @Composable
 fun createBasicRenderingList(listState: LazyListState, callCounter: CallCounter, tag: String? = null) {
     var modifier = Modifier
         .fillMaxWidth()
-        .height((BasicRenderingTotalRowsCount / 2 * ItemHeight).dp)
-        .border(width = 1.dp, color = Color.Red)
+        .height((10 * ItemHeight).dp)
         .background(Color(0x1AFF0000))
-
     if (tag != null) {
         modifier = modifier.testTag(tag)
     }
@@ -79,15 +78,17 @@ fun createBasicRenderingList(listState: LazyListState, callCounter: CallCounter,
     LazyColumn(
         modifier = modifier,
         state = listState
+
     ) {
         items(BasicRenderingTotalRowsCount) { index ->
             ++callCounter.value
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .focusable(enabled = true)
                     .height(ItemHeight.dp)
-                    .background(if (index % 2 == 0) Color.LightGray else Color.Gray)
-                    .border(width = 0.1.dp, color = Color.Gray),
+                    .background(if (index % 2 == 0) Color.LightGray else Color.Gray),
+                   // .border(width = 0.dp, color = Color.Gray),
                 text = "Item: ${index}"
             )
         }

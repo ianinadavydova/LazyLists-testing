@@ -122,6 +122,11 @@ class BasicScrollToItemTest {
 
         assertVisibleWindow(TotalRowsCount - visibleRowCount, state)
         assertFalse(state.isScrollInProgress)
+        assertTrue(
+            callCounter.value in 185..205,
+            "Create rows call count out of range: ${callCounter.value}"
+        )
+        //assertTrue(callCounter.value in 180..181)
     }
 
     @OptIn(ExperimentalTestApi::class)

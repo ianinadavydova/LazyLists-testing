@@ -138,7 +138,7 @@ fun createScrollToItemList(listState: LazyListState, callCounter: CallCounter, t
     }
     LazyColumn(
         modifier = modifier,
-        state = listState,
+        state = listState
     ) {
         items(TotalRowsCount) { index ->
             ++callCounter.value

@@ -16,7 +16,8 @@ private enum class DemoScreen {
     BasicScrollToLastItem,
     BasicScrollToMiddleItem,
     BackwardScrollToFirstItem,
-    AnimatedScrollToLastItem
+    AnimatedScrollToLastItem,
+    ContentPaddingDemo
 }
 
 @Composable
@@ -57,6 +58,11 @@ fun App() {
                     onClick = { selectedDemo = DemoScreen.AnimatedScrollToLastItem },
                     text = { Text("Animated scroll to last item") },
                 )
+                Tab(
+                    selected = selectedDemo == DemoScreen.ContentPaddingDemo,
+                    onClick = { selectedDemo = DemoScreen.ContentPaddingDemo },
+                    text = { Text("Content padding demo") },
+                )
             }
 
             when (selectedDemo) {
@@ -81,6 +87,10 @@ fun App() {
 
                 DemoScreen.AnimatedScrollToLastItem -> {
                     BasicScrollToItemDemo(TotalRowsCount, true, false)
+                }
+
+                DemoScreen.ContentPaddingDemo -> {
+                    ContentPaddingDemo()
                 }
             }
         }

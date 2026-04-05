@@ -1,25 +1,26 @@
 package org.example.project
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 @Composable
-fun BasicRenderingDemo() {
+fun ContentPaddingDemo() {
     val listState = rememberLazyListState()
 
     val visibleRowIndices by remember {
@@ -38,52 +39,39 @@ fun BasicRenderingDemo() {
         }
     }
 
-    val createItemCallsCount = remember({ CallCounter() })
-
-    Text(
-        text = "Visible row count: ${visibleRowIndices.size}",
-        modifier = Modifier.padding(horizontal = 12.dp),
-    )
-
     Text(
         text = "Visible row range: $visibleRangeText",
         modifier = Modifier.padding(horizontal = 12.dp),
     )
 
-    Text(
-        text = "Create row calls count: ${createItemCallsCount.value}",
-        modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-    )
+    val scope = rememberCoroutineScope()
 
-    createBasicRenderingList(listState, createItemCallsCount)
-}
-
-const val BasicRenderingTotalRowsCount = 20
-
-@Composable
-fun createBasicRenderingList(listState: LazyListState, callCounter: CallCounter, tag: String? = null) {
-    var modifier = Modifier
-        .fillMaxWidth()
-        .height((10 * ItemHeight).dp)
-        .background(Color(0x1AFF0000))
-    if (tag != null) {
-        modifier = modifier.testTag(tag)
+    Button(
+        onClick = {
+            scope.launch { listState.scrollToItem(5) }
+        },
+        modifier = Modifier.padding(horizontal = 12.dp)
+    ) {
+        Text("To row index 5")
     }
 
+    val verticalContentPadding = 5
+
     LazyColumn(
-        modifier = modifier,
-        state = listState
+        modifier = Modifier
+            .fillMaxWidth()
+            .height((10 * ItemHeight + verticalContentPadding).dp)
+            .background(Color(0x1AFF0000)),
+        state = listState,
+        contentPadding = PaddingValues(vertical = verticalContentPadding.dp)
     ) {
-        items(BasicRenderingTotalRowsCount) { index ->
-            ++callCounter.value
+        items(20) { index ->
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .focusable(enabled = true)
                     .height(ItemHeight.dp)
                     .background(if (index % 2 == 0) Color.LightGray else Color.Gray),
-                   // .border(width = 0.dp, color = Color.Gray),
-                text = "Item: ${index}"
+                text = "Item: $index"
             )
         }
     }

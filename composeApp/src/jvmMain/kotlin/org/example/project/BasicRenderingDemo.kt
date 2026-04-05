@@ -63,7 +63,7 @@ fun BasicRenderingDemo() {
     createBasicRenderingList(listState, createItemCallsCount)
 }
 
-const val BasicRenderingTotalRowsCount = 200
+const val BasicRenderingTotalRowsCount = 20
 
 @Composable
 fun createBasicRenderingList(listState: LazyListState, callCounter: CallCounter, tag: String? = null) {

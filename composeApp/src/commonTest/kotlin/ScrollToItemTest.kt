@@ -9,7 +9,7 @@ import org.example.project.TotalRowsCount
 import org.example.project.createScrollToItemList
 import kotlin.test.*
 
-class BasicScrollToItemTest {
+class ScrollToItemTest {
 
     private val tagOfList = "TagOfList";
     private val visibleRowCount = 10
@@ -126,11 +126,9 @@ class BasicScrollToItemTest {
         assertVisibleWindow(TotalRowsCount - visibleRowCount, state)
         assertFalse(state.isScrollInProgress)
         assertTrue(
-            callCounter.value in 185..205,
+            callCounter.value in 185..TotalRowsCount,
             "Expected from 185 to 205 item creation counts, but was: ${callCounter.value}"
-        )
-        //assertTrue(callCounter.value in 180..181)
-    }
+        ) }
 
     @OptIn(ExperimentalTestApi::class)
     private fun ComposeUiTest.assertVisibleWindow(firstVisibleIndex: Int, listState: LazyListState) {

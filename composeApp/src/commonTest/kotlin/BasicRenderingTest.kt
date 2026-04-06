@@ -15,7 +15,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-class BasicTest {
+class BasicRenderingTest {
 
     private val tagOfList = "TagOfList"
 

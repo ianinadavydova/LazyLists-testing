@@ -28,7 +28,7 @@ class StickyHeaderAndStableKeyTest {
 
     @OptIn(ExperimentalTestApi::class)
     @Test
-    fun test() = runComposeUiTest {
+    fun stickyHeaderWithStableKeytest() = runComposeUiTest {
         var listState: LazyListState? = null
         // Declares a mock UI to demonstrate API calls
         //

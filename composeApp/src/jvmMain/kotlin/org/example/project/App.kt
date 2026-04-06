@@ -13,6 +13,7 @@ import androidx.compose.ui.tooling.preview.Preview
 private enum class DemoScreen {
     Basic,
     InitialScroll,
+    ZeroViewport,
     BasicScrollToLastItem,
     BasicScrollToMiddleItem,
     BackwardScrollToFirstItem,
@@ -38,6 +39,11 @@ fun App() {
                     selected = selectedDemo == DemoScreen.InitialScroll,
                     onClick = { selectedDemo = DemoScreen.InitialScroll },
                     text = { Text("Initial Scroll") },
+                )
+                Tab(
+                    selected = selectedDemo == DemoScreen.ZeroViewport,
+                    onClick = { selectedDemo = DemoScreen.ZeroViewport },
+                    text = { Text("Zero viewport") },
                 )
                 Tab(
                     selected = selectedDemo == DemoScreen.BasicScrollToLastItem,
@@ -77,6 +83,9 @@ fun App() {
                 }
                 DemoScreen.InitialScroll -> {
                     LazyListInitialScrollDemo(modifier = Modifier.fillMaxSize())
+                }
+                DemoScreen.ZeroViewport -> {
+                    LazyListZeroViewportDemo(modifier = Modifier.fillMaxSize())
                 }
 
                 DemoScreen.BasicScrollToLastItem -> {

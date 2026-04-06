@@ -1,19 +1,26 @@
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.*
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.example.project.CallCounter
-import org.example.project.InitialScrollRow
-import org.example.project.TotalRowsCount
-import org.example.project.createScrollToItemList
 import kotlin.test.*
 
-class ScrollToItemTest {
+class RowScrollToItemTest {
 
     private val tagOfList = "TagOfList"
-    private val visibleRowCount = 10
+    private val visibleItemsCount = 10
+    private val totalItemsCount = 5000
+    private val itemWidth = 50
 
     @Test
     fun scrollToItemInTheMiddleTest() {
@@ -22,7 +29,28 @@ class ScrollToItemTest {
 
     @Test
     fun scrollToLastItemTest() {
-        scrollToItemTest(TotalRowsCount - 1, TotalRowsCount - visibleRowCount)
+        scrollToItemTest(totalItemsCount - 1, totalItemsCount - visibleItemsCount)
+    }
+
+    @Composable
+    private fun createLazyRow(listState: LazyListState, callCounter: CallCounter) {
+        LazyRow(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width((visibleItemsCount * itemWidth).dp)
+                .testTag(tagOfList),
+            state = listState,
+        ) {
+            items(totalItemsCount) { index ->
+                ++callCounter.value
+                Text(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .width(itemWidth.dp),
+                    text = "Item: $index",
+                )
+            }
+        }
     }
 
     @OptIn(ExperimentalTestApi::class)
@@ -32,7 +60,7 @@ class ScrollToItemTest {
 
         setContent {
             listState = rememberLazyListState()
-            createScrollToItemList(listState, callCounter, tagOfList)
+            createLazyRow(listState, callCounter)
         }
 
         // Tests the declared UI with assertions and actions of the Compose Multiplatform testing API
@@ -40,13 +68,12 @@ class ScrollToItemTest {
         val state = assertNotNull(listState)
 
         assertVisibleWindow(0, state)
-        assertEquals(10, callCounter.value)
+        assertEquals(visibleItemsCount, callCounter.value)
 
         state.scrollToItem(indexToScroll)
 
         assertVisibleWindow(expectedFirstVisibleItem, state)
-        assertEquals(20, callCounter.value)
-
+        assertEquals(2 * visibleItemsCount, callCounter.value)
     }
 
     @Test
@@ -57,7 +84,7 @@ class ScrollToItemTest {
 
         setContent {
             listState = rememberLazyListState()
-            createScrollToItemList(listState, callCounter, tagOfList)
+            createLazyRow(listState, callCounter)
         }
 
         // Tests the declared UI with assertions and actions of the Compose Multiplatform testing API
@@ -67,16 +94,16 @@ class ScrollToItemTest {
         assertVisibleWindow(0, state)
         assertTrue(state.canScrollForward)
         assertFalse(state.canScrollBackward)
-        assertEquals(10, callCounter.value,
-            "Expected 10 item creation counts, but was $callCounter.value")
+        assertEquals(visibleItemsCount, callCounter.value,
+            "Expected $visibleItemsCount item creation counts, but was $callCounter.value")
 
-        state.scrollToItem(TotalRowsCount - 1)
+        state.scrollToItem(totalItemsCount - 1)
 
-        assertVisibleWindow(TotalRowsCount - visibleRowCount, state)
+        assertVisibleWindow(totalItemsCount - visibleItemsCount, state)
         assertFalse(state.canScrollForward)
         assertTrue(state.canScrollBackward)
-        assertEquals(20, callCounter.value,
-            "Expected 20 item creation counts, but was $callCounter.value")
+        assertEquals(2 * visibleItemsCount, callCounter.value,
+            "Expected ${2 * visibleItemsCount} item creation counts, but was $callCounter.value")
 
 
         state.scrollToItem(0)
@@ -84,9 +111,8 @@ class ScrollToItemTest {
         assertVisibleWindow(0, state)
         assertTrue(state.canScrollForward)
         assertFalse(state.canScrollBackward)
-        assertEquals(30, callCounter.value,
-        "Expected 30 item creation counts, but was $callCounter.value")
-
+        assertEquals(3 * visibleItemsCount, callCounter.value,
+            "Expected ${3 * visibleItemsCount}  item creation counts, but was $callCounter.value")
     }
 
     @Test
@@ -99,7 +125,7 @@ class ScrollToItemTest {
         setContent {
             scrollScope = rememberCoroutineScope()
             listState = rememberLazyListState()
-            createScrollToItemList(listState, callCounter, tagOfList)
+            createLazyRow(listState, callCounter)
         }
 
         // Tests the declared UI with assertions and actions of the Compose Multiplatform testing API
@@ -112,56 +138,37 @@ class ScrollToItemTest {
         mainClock.autoAdvance = false
         runOnIdle {
             scope.launch {
-                state.animateScrollToItem(TotalRowsCount - 1)
+                state.animateScrollToItem(totalItemsCount - 1)
             }
         }
 
         mainClock.advanceTimeUntil(5_000) {
-            state.firstVisibleItemIndex == TotalRowsCount - visibleRowCount
+            state.firstVisibleItemIndex == totalItemsCount - visibleItemsCount
         }
         mainClock.advanceTimeUntil(5_000) {
             !state.isScrollInProgress
         }
         waitForIdle()
 
-        assertVisibleWindow(TotalRowsCount - visibleRowCount, state)
+        assertVisibleWindow(totalItemsCount - visibleItemsCount, state)
         assertFalse(state.isScrollInProgress)
         assertTrue(
-            callCounter.value in 185..TotalRowsCount,
-            "Expected from 185 to 205 item creation counts, but was: ${callCounter.value}"
-        ) }
+            callCounter.value in 140..160,
+            "Expected from 140 to 160 item creation counts, but was: ${callCounter.value}"
+        )
+    }
 
     @OptIn(ExperimentalTestApi::class)
     private fun ComposeUiTest.assertVisibleWindow(firstVisibleIndex: Int, listState: LazyListState) {
         assertEquals(firstVisibleIndex, listState.firstVisibleItemIndex)
-        assertEquals(visibleRowCount, listState.layoutInfo.visibleItemsInfo.size)
+        assertEquals(visibleItemsCount, listState.layoutInfo.visibleItemsInfo.size)
         assertEquals(
-            (firstVisibleIndex until firstVisibleIndex + visibleRowCount).toList(),
+            (firstVisibleIndex until firstVisibleIndex + visibleItemsCount).toList(),
             listState.layoutInfo.visibleItemsInfo.map { it.index }
         )
 
-        for (index in firstVisibleIndex until firstVisibleIndex + visibleRowCount) {
+        for (index in firstVisibleIndex until firstVisibleIndex + visibleItemsCount) {
             onNodeWithText("Item: $index").assertExists()
         }
-    }
-
-    @Test
-    @OptIn(ExperimentalTestApi::class)
-    fun initialScrollAnchorTest() = runComposeUiTest {
-        var listState: LazyListState? = null
-
-        setContent {
-            val state = rememberLazyListState(
-                initialFirstVisibleItemIndex = InitialScrollRow,
-            )
-
-            listState = state
-            createScrollToItemList(state, CallCounter(), tagOfList)
-        }
-
-        onNodeWithTag(tagOfList).assertExists()
-        val state = assertNotNull(listState)
-
-        assertVisibleWindow(InitialScrollRow, state)
     }
 }

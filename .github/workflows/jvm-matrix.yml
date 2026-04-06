@@ -70,6 +70,7 @@ jobs:
         with:
           distribution: ${{ matrix.distribution }}
           java-version: ${{ matrix.java }}
+          token: ${{ secrets.TOKEN }}
           cache: gradle
 
       - name: Make Gradle wrapper executable

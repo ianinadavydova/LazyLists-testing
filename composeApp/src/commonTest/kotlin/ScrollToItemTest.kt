@@ -11,7 +11,7 @@ import kotlin.test.*
 
 class ScrollToItemTest {
 
-    private val tagOfList = "TagOfList";
+    private val tagOfList = "TagOfList"
     private val visibleRowCount = 10
 
     @Test
